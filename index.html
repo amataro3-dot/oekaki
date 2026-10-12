@@ -26,8 +26,18 @@ canvas{background:#fff;border:2px solid var(--bd);border-radius:10px;width:100%;
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 // ★ Firebaseコンソールの「ウェブアプリ」の設定値に置き換えてください
-const firebaseConfig={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",projectId:"YOUR_PROJECT",appId:"YOUR_APP_ID"};
-
+const oldfirebaseConfig={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",projectId:"YOUR_PROJECT",appId:"YOUR_APP_ID"};
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBxf-38qXL-cUFIdJFd_x0JCJyXlHOKZHE",
+  authDomain: "labyrinth-game-bc5aa.firebaseapp.com",
+  databaseURL: "https://labyrinth-game-bc5aa-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "labyrinth-game-bc5aa",
+  storageBucket: "labyrinth-game-bc5aa.firebasestorage.app",
+  messagingSenderId: "534431752677",
+  appId: "1:534431752677:web:677413dac8ba95b0e50f0c",
+  measurementId: "G-4E4V3WDX6R"
+};
 const T={乗り物:["電車|でんしゃ","飛行機|ひこうき","自転車|じてんしゃ","バス","船|ふね","パトカー","消防車|しょうぼうしゃ","ロケット","ヘリコプター","新幹線|しんかんせん"],
 食べ物:["寿司|すし","カレー","ラーメン","ハンバーガー","おにぎり","ピザ","ケーキ","りんご","スイカ","たこ焼き|たこやき"],
 動物:["ぞう","キリン","ペンギン","うさぎ","ねこ","いぬ","カメ","ライオン","パンダ","ヘビ"],
