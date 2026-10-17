@@ -14,45 +14,34 @@ button{font:inherit;border:0;border-radius:10px;padding:11px 18px;background:var
 button.sub{background:transparent;color:var(--tx);border:1px solid var(--bd)}
 button:disabled{opacity:.45}
 input,select{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);width:100%;margin:4px 0}
-canvas{background:#fff;border:2px solid var(--bd);border-radius:10px;width:100%;max-width:420px;aspect-ratio:1;touch-action:none;display:block;margin:6px auto}
+canvas{background:#fff;border:2px solid var(--bd);border-radius:10px;width:100%;max-width:420px;aspect-ratio:1;touch-action:pan-y;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;display:block;margin:6px auto}#cv{touch-action:none}html,body{overscroll-behavior-y:contain}
 .bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:var(--ac)}
 .big{font-size:30px;font-weight:800;margin:8px 0}.code{font-size:40px;letter-spacing:6px;font-weight:800}
 .sw{display:inline-block;width:32px;height:32px;border-radius:50%;border:3px solid var(--bd);margin:3px;padding:0}
 .sw.on{border-color:var(--ac);transform:scale(1.15)}
 .ok{color:#16a34a}.ng{color:#dc2626}.err{color:#dc2626;min-height:20px}.dim{opacity:.65;font-size:14px}
 .pl{display:inline-block;padding:4px 10px;margin:3px;border-radius:20px;border:1px solid var(--bd)}.pl.me{background:var(--ac);color:#fff}
-</style></head><body><div id="app"></div>
+.kk{display:inline-block;padding:2px 7px;margin-left:4px;color:#dc2626;font-weight:700}</style></head><body><div id="app"></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="topics/topics.js"></script>
 <script>
-// ★ Firebaseコンソールの「ウェブアプリ」の設定値に置き換えてください
-const oldfirebaseConfig={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",projectId:"YOUR_PROJECT",appId:"YOUR_APP_ID"};
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBxf-38qXL-cUFIdJFd_x0JCJyXlHOKZHE",
-  authDomain: "labyrinth-game-bc5aa.firebaseapp.com",
-  databaseURL: "https://labyrinth-game-bc5aa-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "labyrinth-game-bc5aa",
-  storageBucket: "labyrinth-game-bc5aa.firebasestorage.app",
-  messagingSenderId: "534431752677",
-  appId: "1:534431752677:web:677413dac8ba95b0e50f0c",
-  measurementId: "G-4E4V3WDX6R"
-};
-const T={乗り物:["電車|でんしゃ","飛行機|ひこうき","自転車|じてんしゃ","バス","船|ふね","パトカー","消防車|しょうぼうしゃ","ロケット","ヘリコプター","新幹線|しんかんせん"],
-食べ物:["寿司|すし","カレー","ラーメン","ハンバーガー","おにぎり","ピザ","ケーキ","りんご","スイカ","たこ焼き|たこやき"],
-動物:["ぞう","キリン","ペンギン","うさぎ","ねこ","いぬ","カメ","ライオン","パンダ","ヘビ"],
-道具:["傘|かさ","時計|とけい","ハサミ","めがね","ギター","カメラ","電話|でんわ","ほうき","鉛筆|えんぴつ","ベッド"],
-場所:["学校|がっこう","お城|おしろ","富士山|ふじさん","灯台|とうだい","観覧車|かんらんしゃ","家|いえ","橋|はし","公園|こうえん","病院|びょういん","東京タワー|とうきょうたわー"]};
+
+const T=(typeof TOPICS!=='undefined')?TOPICS:{};
 const DRAW=30000,VIEW=10000,ANS=30000;
 const $=id=>document.getElementById(id),app=$('app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const norm=s=>(s||'').normalize('NFKC').toLowerCase().replace(/[\s・、。!！?？]/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
-const judge=(a,r)=>norm(a)!==''&&(norm(a)===norm(r.topic)||norm(a)===norm(r.reading));
-const me={id:Math.random().toString(36).slice(2,10),name:''};
-let db,ref,room=null,off=0,curKey='',strokes=[],locked=false,lastAdv='',replaying=false,odSet=false;
+const judge=(a,r)=>{const x=norm(a);return x!==''&&[r.topic,...String(r.reading||'').split('|')].some(t=>norm(t)===x)};
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const me={id:Math.random().toString(36).slice(2,10),name:LS.get('oekaki-name')||''};
+let db,ref,room=null,off=0,curKey='',strokes=[],locked=false,lastAdv='',replaying=false,odSet=false,log=[],t0=0,abKey='',abAt=0;
+document.addEventListener('touchmove',e=>{if(e.target.id==='cv')e.preventDefault()},{passive:false});
 
-if(firebaseConfig.apiKey==='YOUR_API_KEY'){app.innerHTML='<h1>設定が必要です</h1><div class="card">ファイル先頭の firebaseConfig を自分のFirebaseの値に書き換えてください。</div>'}
+if(typeof firebaseConfig==='undefined'||firebaseConfig.apiKey==='YOUR_API_KEY'){app.innerHTML='<h1>設定が必要です</h1><div class="card">config.js に firebaseConfig を入れてください。</div>'}
+else if(!Object.keys(T).length){app.innerHTML='<h1>お題が読み込めません</h1><div class="card">topics/topics.js を確認してください。</div>'}
 else{firebase.initializeApp(firebaseConfig);db=firebase.database();
 db.ref('.info/serverTimeOffset').on('value',s=>off=s.val()||0);home();}
 const now=()=>Date.now()+off;
@@ -60,21 +49,33 @@ const now=()=>Date.now()+off;
 function home(err){curKey='';app.innerHTML=`<h1>🎨 お絵描き伝言ゲーム</h1><div class="card">
 <input id="nm" maxlength="8" placeholder="なまえ" value="${esc(me.name)}">
 <button id="mk">部屋を作る</button><hr style="border-color:var(--bd)">
-<input id="cd" inputmode="numeric" maxlength="4" placeholder="部屋コード(4けた)">
+<input id="cd" inputmode="numeric" maxlength="4" placeholder="部屋コード(4けた)" value="${esc(LS.get('oekaki-room')||'')}">
 <button id="jn" class="sub">入室する</button><div class="err" id="er">${err||''}</div></div><div class="dim">2〜8人</div>`;
 $('mk').onclick=()=>enter(null);$('jn').onclick=()=>enter($('cd').value.trim());}
 
+function cleanup(){try{ref.off()}catch(e){}odSet=false;room=null;curKey='';LS.del('oekaki-room')}
+
 async function enter(code){const nm=$('nm').value.trim();if(!nm){$('er').textContent='なまえを入れてね';return}
-me.name=nm;const create=!code;
-try{if(create){for(let i=0;i<20;i++){code=String(1000+Math.floor(Math.random()*9000));if(!(await db.ref('oekaki-rooms/'+code).get()).exists())break}}
-else{const r=(await db.ref('oekaki-rooms/'+code).get()).val();
+me.name=nm;LS.set('oekaki-name',nm);const create=!code;
+try{let r=null,dupJoined=Infinity;const dups=[];
+if(create){for(let i=0;i<20;i++){code=String(1000+Math.floor(Math.random()*9000));if(!(await db.ref('oekaki-rooms/'+code).get()).exists())break}}
+else{r=(await db.ref('oekaki-rooms/'+code).get()).val();
 if(!r)return $('er').textContent='部屋がありません';
-if(r.state!=='lobby')return $('er').textContent='もう始まっています';
-if(Object.keys(r.players||{}).length>=8)return $('er').textContent='満員です';}
+const ps=r.players||{};
+if(r.state!=='lobby'){const ex=(r.order||[]).find(id=>ps[id]&&r.names&&r.names[id]===nm&&!(r.left&&r.left[id]));
+if(!ex)return $('er').textContent='もう始まっています';me.id=ex}
+else{Object.entries(ps).forEach(([id,p])=>{if(p.name===nm){dups.push(id);dupJoined=Math.min(dupJoined,p.joined||Infinity)}});
+if(Object.keys(ps).length-dups.length>=8)return $('er').textContent='満員です'}}
 ref=db.ref('oekaki-rooms/'+code);
 if(create)await ref.update({state:'lobby',phaseId:0,category:'すべて'});
-await ref.child('players/'+me.id).set({name:me.name,joined:firebase.database.ServerValue.TIMESTAMP});
-ref.on('value',s=>{room=s.val();if(!room)return home('部屋が閉じました');
+for(const id of dups)await ref.child('players/'+id).remove();
+const pr=ref.child('players/'+me.id);
+if((await pr.get()).exists())await pr.update({name:me.name});
+else await pr.set({name:me.name,joined:isFinite(dupJoined)?dupJoined:firebase.database.ServerValue.TIMESTAMP});
+LS.set('oekaki-room',code);odSet=false;
+ref.on('value',s=>{room=s.val();
+if(!room){cleanup();return home('部屋が閉じました')}
+if(!(room.players&&room.players[me.id])){const k=room.kicked&&room.kicked[me.id];cleanup();return home(k?'退出させられました':'部屋から外れました')}
 if(room.state==='lobby'&&!odSet){ref.child('players/'+me.id).onDisconnect().remove();odSet=true}
 if(room.state!=='lobby'&&odSet){ref.child('players/'+me.id).onDisconnect().cancel();odSet=false}
 render();});
@@ -85,37 +86,38 @@ const isHost=()=>{const p=plist();return p.length&&p[0][0]===me.id};
 const nameOf=id=>(room.names&&room.names[id])||(room.players&&room.players[id]&&room.players[id].name)||'？';
 
 function render(){const r=room;
-const key=r.state==='lobby'?'L'+plist().map(p=>p[0]).join()+r.category:r.state==='result'?'R'+r.ok:[r.state,r.step,r.sub].join();
+const key=r.state==='lobby'?'L'+plist().map(p=>p[0]).join()+r.category:r.state==='result'?'R'+r.ok+isHost():[r.state,r.step,r.sub].join();
 if(key===curKey)return;curKey=key;
-if(r.state==='lobby')lobby();else if(r.state==='play')play();else result();}
+if(r.state==='lobby')lobby();else if(r.state==='play')play();else result();
+app.insertAdjacentHTML('beforeend','<div style="margin-top:22px"><button class="sub" id="lv">部屋を出る</button></div>');$('lv').onclick=leave;}
 
 function lobby(){const p=plist(),h=isHost();
 app.innerHTML=`<h1>ロビー</h1><div class="card"><div class="dim">部屋コード</div><div class="code">${ref.key}</div>
-<div>${p.map(([id,v])=>`<span class="pl ${id===me.id?'me':''}">${esc(v.name)}</span>`).join('')}</div><div class="dim">${p.length}/8人</div></div>
+<div>${p.map(([id,v])=>`<span class="pl ${id===me.id?'me':''}">${esc(v.name)}${h&&id!==me.id?` <b class="kk" data-id="${id}">✕</b>`:''}</span>`).join('')}</div><div class="dim">${p.length}/8人</div></div>
 ${h?`<div class="card">お題ジャンル<select id="cat">${['すべて',...Object.keys(T)].map(c=>`<option ${c===room.category?'selected':''}>${c}</option>`).join('')}</select>
 <button id="st" ${p.length<2?'disabled':''}>ゲーム開始</button></div>`:`<div class="card">ジャンル：${esc(room.category)}<br><span class="dim">ホストの開始を待っています…</span></div>`}`;
-if(h){$('cat').onchange=e=>ref.update({category:e.target.value});$('st').onclick=start}}
+if(h){$('cat').onchange=e=>ref.update({category:e.target.value});$('st').onclick=start;document.querySelectorAll('.kk').forEach(b=>b.onclick=()=>kick(b.dataset.id))}}
 
 function start(){const ids=plist().map(p=>p[0]);
 for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
-const pool=room.category==='すべて'?Object.values(T).flat():T[room.category];
-const [topic,rd]=pool[Math.floor(Math.random()*pool.length)].split('|');
+const pool=(room.category==='すべて'||!T[room.category])?Object.values(T).flat():T[room.category];
+const pk=pool[Math.floor(Math.random()*pool.length)].split('|'),topic=pk[0],rd=pk.slice(1).join('|');
 const names={};ids.forEach(i=>names[i]=room.players[i].name);
-ref.update({state:'play',order:ids,names,topic,reading:rd||topic,step:0,sub:'draw',deadline:now()+DRAW,drawings:null,answer:null,ok:null,phaseId:(room.phaseId||0)+1});}
+ref.update({state:'play',order:ids,names,topic,reading:rd||topic,step:0,sub:'draw',deadline:now()+DRAW,drawings:null,answer:null,ok:null,phaseId:(room.phaseId||0)+1,left:null});}
 
 function timerHtml(){return`<div class="bar"><i id="bar"></i></div><div class="big" id="sec"></div>`}
 
 function play(){const r=room,n=r.order.length,act=r.order[r.step],mine=act===me.id;locked=false;
 const prog=`<div class="dim">${r.step+1}/${n}人目</div>`;
 if(!mine){app.innerHTML=`${prog}<div class="card"><div class="big">${esc(nameOf(act))}さんが<br>${r.sub==='draw'?'描いています ✏️':r.sub==='view'?'絵を見ています 👀':'答えを考えています 🤔'}</div>${timerHtml()}</div>
-<div>${r.order.map((id,i)=>`<span class="pl ${i===r.step?'me':''}">${esc(nameOf(id))}</span>`).join('→')}</div>`;return}
+<div>${r.order.map((id,i)=>`<span class="pl ${i===r.step?'me':''}">${esc(nameOf(id))}${r.left&&r.left[id]?'(退出)':''}</span>`).join('→')}</div>`;return}
 if(r.sub==='draw'){strokes=[];
 app.innerHTML=`${prog}${r.step===0?`<div class="card">お題<div class="big">${esc(r.topic)}</div></div>`:'<div class="card">見た絵を思い出して描こう！</div>'}${timerHtml()}
 <canvas id="cv" width="300" height="300"></canvas><div id="tl"></div>
 <button id="un" class="sub">1つ戻す</button><button id="cl" class="sub">全部消す</button><button id="dn">完了</button>`;
 setupCanvas();$('dn').onclick=done}
-else if(r.sub==='view'){app.innerHTML=`${prog}<div class="card">前の人の絵を見て！</div>${timerHtml()}<canvas id="cv" width="300" height="300"></canvas><button id="dn">わかった！</button>`;
-paint($('cv'),parse(r.drawings&&r.drawings[r.step-1]));$('dn').onclick=done}
+else if(r.sub==='view'){app.innerHTML=`${prog}<div class="card">${r.drawings&&r.drawings[r.step-1]?'前の人の絵を見て！':'前の人が抜けたので絵がありません'}</div>${timerHtml()}<canvas id="cv" width="300" height="300"></canvas><button id="dn">わかった！</button>`;
+paint($('cv'),fin(load(r.drawings&&r.drawings[r.step-1]).l));$('dn').onclick=done}
 else{app.innerHTML=`${prog}<div class="card">お題は何でしょう？<input id="ans" placeholder="答えを入力" autocomplete="off"><button id="dn">答える</button></div>${timerHtml()}`;
 $('dn').onclick=done;$('ans').onkeydown=e=>{if(e.key==='Enter')done()}}}
 
@@ -125,7 +127,7 @@ async function adv(){const r=room,key=[r.state,r.step,r.sub].join();if(lastAdv==
 const pid=r.phaseId||0,n=r.order.length,mine=r.order[r.step]===me.id;
 const c=await ref.child('phaseId').transaction(v=>(v||0)===pid?pid+1:undefined);if(!c.committed)return;
 const u={};
-if(r.sub==='draw'){if(mine)u['drawings/'+r.step]=JSON.stringify(strokes);u.step=r.step+1;u.sub='view';u.deadline=now()+VIEW}
+if(r.sub==='draw'){if(mine)u['drawings/'+r.step]=JSON.stringify({d:Date.now()-t0,l:log});u.step=r.step+1;u.sub='view';u.deadline=now()+VIEW}
 else if(r.sub==='view'){u.sub=r.step===n-1?'answer':'draw';u.deadline=now()+(r.step===n-1?ANS:DRAW)}
 else{const a=mine&&$('ans')?$('ans').value.trim():'';u.answer=a;u.ok=judge(a,r);u.state='result'}
 await ref.update(u);}
@@ -134,25 +136,27 @@ setInterval(()=>{if(!room||room.state!=='play')return;
 const left=room.deadline-now(),tot=room.sub==='view'?VIEW:room.sub==='draw'?DRAW:ANS;
 if($('bar'))$('bar').style.width=Math.max(0,Math.min(100,left/tot*100))+'%';
 if($('sec'))$('sec').textContent=Math.max(0,Math.ceil(left/1000));
+if(isHost()&&room.left&&room.left[room.order[room.step]]){const k=[room.state,room.step,room.sub].join();if(abKey!==k){abKey=k;abAt=Date.now()}else if(Date.now()-abAt>1200)adv();return}
 if(left<=0){if(room.order[room.step]===me.id)adv();else if(isHost()&&left<-4000)adv();}},250);
 
-function parse(s){try{return s?JSON.parse(s):[]}catch(e){return[]}}
+function load(s){try{const o=s?JSON.parse(s):null;if(!o)return{d:0,l:[]};if(Array.isArray(o))return{d:0,l:o.map(x=>({...x,k:'s'}))};return o}catch(e){return{d:0,l:[]}}}
+function fin(l){const a=[];for(const e of l){if(e.k==='s')a.push(e);else if(e.k==='u')a.pop();else if(e.k==='c')a.length=0}return a}
 function clear(c){const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,300,300)}
 function stroke(x,s){x.strokeStyle=s.c;x.lineWidth=s.w;x.lineCap=x.lineJoin='round';x.beginPath();x.moveTo(s.p[0],s.p[1]);
 if(s.p.length<4)x.lineTo(s.p[0],s.p[1]);for(let i=2;i<s.p.length;i+=2)x.lineTo(s.p[i],s.p[i+1]);x.stroke()}
 function paint(c,ss){clear(c);const x=c.getContext('2d');ss.forEach(s=>stroke(x,s))}
 
-function setupCanvas(){const c=$('cv'),x=c.getContext('2d');let cur=null,col='#222',w=4;clear(c);
+function setupCanvas(){const c=$('cv'),x=c.getContext('2d');let cur=null,col='#222',w=4;clear(c);strokes=[];log=[];t0=Date.now();
 const cols=['#222','#e11d48','#2563eb','#16a34a','#f59e0b','#fff'];
 $('tl').innerHTML=cols.map(k=>`<button class="sw ${k===col?'on':''}" data-c="${k}" style="background:${k}"></button>`).join('')+
 `<button class="sub" data-w="3">細</button><button class="sub" data-w="8">太</button>`;
 $('tl').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.c){col=b.dataset.c;$('tl').querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',s===b))}if(b.dataset.w)w=+b.dataset.w};
 const pos=e=>{const b=c.getBoundingClientRect();return[Math.round((e.clientX-b.left)*300/b.width),Math.round((e.clientY-b.top)*300/b.height)]};
-c.onpointerdown=e=>{if(locked)return;c.setPointerCapture(e.pointerId);cur={c:col,w:col==='#fff'?Math.max(w,10):w,p:pos(e)};strokes.push(cur);stroke(x,cur)};
-c.onpointermove=e=>{if(!cur)return;const p=pos(e),l=cur.p;if(Math.hypot(p[0]-l[l.length-2],p[1]-l[l.length-1])<2)return;l.push(p[0],p[1]);stroke(x,cur)};
+c.onpointerdown=e=>{if(locked)return;c.setPointerCapture(e.pointerId);cur={k:'s',c:col,w:col==='#fff'?Math.max(w,10):w,p:pos(e),t:[Date.now()-t0]};strokes.push(cur);log.push(cur);stroke(x,cur)};
+c.onpointermove=e=>{if(!cur)return;const p=pos(e),l=cur.p;if(Math.hypot(p[0]-l[l.length-2],p[1]-l[l.length-1])<2)return;l.push(p[0],p[1]);cur.t.push(Date.now()-t0);stroke(x,cur)};
 c.onpointerup=c.onpointercancel=()=>cur=null;
-$('un').onclick=()=>{if(!locked){strokes.pop();paint(c,strokes)}};
-$('cl').onclick=()=>{if(!locked){strokes=[];paint(c,strokes)}};}
+$('un').onclick=()=>{if(!locked){strokes.pop();log.push({k:'u',t:Date.now()-t0});paint(c,strokes)}};
+$('cl').onclick=()=>{if(!locked){strokes=[];log.push({k:'c',t:Date.now()-t0});paint(c,strokes)}};}
 
 function result(){const r=room,n=r.order.length;
 app.innerHTML=`<h1>結果発表</h1><div class="card"><div class="dim">お題</div><div class="big">${esc(r.topic)}</div>
@@ -160,19 +164,24 @@ app.innerHTML=`<h1>結果発表</h1><div class="card"><div class="dim">お題</d
 <div class="big ${r.ok?'ok':'ng'}">${r.ok?'⭕ 正解！':'❌ ざんねん…'}</div>
 ${isHost()?`<button class="sub" id="tg">${r.ok?'不正解にする':'正解にする'}</button>`:''}</div>
 <button id="rp">▶ 最初から再生</button>
-${r.order.slice(0,n-1).map((id,i)=>`<div class="card"><b>${i+1}. ${esc(nameOf(id))}${i===0?`（お題：${esc(r.topic)}）`:''}</b><canvas data-i="${i}" width="300" height="300"></canvas></div>`).join('')}
+${r.order.slice(0,n-1).map((id,i)=>`<div class="card"><b>${i+1}. ${esc(nameOf(id))}${r.left&&r.left[id]?'（退出）':''}${i===0?`（お題：${esc(r.topic)}）`:''}</b><canvas data-i="${i}" width="300" height="300"></canvas></div>`).join('')}
 ${isHost()?'<button id="ag">もう一度あそぶ</button>':''}`;
-document.querySelectorAll('canvas[data-i]').forEach(c=>paint(c,parse(r.drawings&&r.drawings[c.dataset.i])));
+document.querySelectorAll('canvas[data-i]').forEach(c=>paint(c,fin(load(r.drawings&&r.drawings[c.dataset.i]).l)));
 $('rp').onclick=replay;
 if($('tg'))$('tg').onclick=()=>ref.update({ok:!r.ok});
-if($('ag'))$('ag').onclick=()=>ref.update({state:'lobby',order:null,names:null,topic:null,reading:null,step:null,sub:null,deadline:null,drawings:null,answer:null,ok:null});}
+if($('ag'))$('ag').onclick=()=>ref.update({state:'lobby',order:null,names:null,topic:null,reading:null,step:null,sub:null,deadline:null,drawings:null,answer:null,ok:null,left:null,kicked:null});}
 
-async function replay(){if(replaying)return;replaying=true;
-const cs=[...document.querySelectorAll('canvas[data-i]')];cs.forEach(clear);
-for(const c of cs){c.scrollIntoView({block:'center',behavior:'smooth'});await sleep(500);
-const ss=parse(room.drawings&&room.drawings[c.dataset.i]),x=c.getContext('2d');
-const tot=ss.reduce((a,s)=>a+s.p.length/2,0),per=Math.max(6,Math.min(25,5000/Math.max(tot,1)));
-for(const s of ss){const m=s.p.length/2;for(let k=1;k<=m;k++){clear(c);ss.slice(0,ss.indexOf(s)).forEach(t=>stroke(x,t));stroke(x,{c:s.c,w:s.w,p:s.p.slice(0,k*2)});if(k%3===0)await sleep(per*3)}await sleep(80)}
-paint(c,ss);await sleep(700)}
-replaying=false}
+const SPEED=1.5;
+function at(l,T){const a=[];for(const e of l){if(e.k==='s'){if(!e.t||e.t[0]>T)continue;let n=0;while(n<e.t.length&&e.t[n]<=T)n++;a.push({c:e.c,w:e.w,p:e.p.slice(0,n*2)})}else if(e.t<=T){if(e.k==='u')a.pop();else a.length=0}}return a}
+function playOne(c,dd){return new Promise(res=>{const end=Math.max(dd.d||0,...dd.l.map(e=>e.k==='s'?(e.t?e.t[e.t.length-1]:0):e.t),0)+400,s0=performance.now();
+const f=()=>{const T=(performance.now()-s0)*SPEED;paint(c,at(dd.l,T));if(T>=end)res();else requestAnimationFrame(f)};f()})}
+async function replay(){if(replaying)return;replaying=true;const cs=[...document.querySelectorAll('canvas[data-i]')];cs.forEach(clear);
+for(const c of cs){c.scrollIntoView({block:'center',behavior:'smooth'});await sleep(600);const dd=load(room.drawings&&room.drawings[c.dataset.i]);await playOne(c,dd);paint(c,fin(dd.l));await sleep(500)}replaying=false}
+
+async function kick(id){if(!confirm(nameOf(id)+'さんを退出させますか？'))return;await ref.child('kicked/'+id).set(true);await ref.child('players/'+id).remove()}
+async function leave(){const r=room,id=me.id;if(r.state==='play'&&!confirm('ゲームの途中です。本当に部屋を出ますか？'))return;
+const others=Object.keys(r.players||{}).filter(k=>k!==id).length,rf=ref;
+rf.child('players/'+id).onDisconnect().cancel();cleanup();
+try{if(r.state==='play')await rf.child('left/'+id).set(true);await rf.child('players/'+id).remove();if(!others)await rf.remove()}catch(e){}
+home()}
 </script></body></html>
