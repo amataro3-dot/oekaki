@@ -24,6 +24,8 @@ canvas{background:#fff;border:2px solid var(--bd);border-radius:10px;width:100%;
 .kk{display:inline-block;padding:2px 7px;margin-left:4px;color:#dc2626;font-weight:700}</style></head><body><div id="app"></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script src="config.js"></script>
 <script src="topics/topics.js"></script>
 <script>
@@ -42,8 +44,16 @@ document.addEventListener('touchmove',e=>{if(e.target.id==='cv')e.preventDefault
 
 if(typeof firebaseConfig==='undefined'||firebaseConfig.apiKey==='YOUR_API_KEY'){app.innerHTML='<h1>設定が必要です</h1><div class="card">config.js に firebaseConfig を入れてください。</div>'}
 else if(!Object.keys(T).length){app.innerHTML='<h1>お題が読み込めません</h1><div class="card">topics/topics.js を確認してください。</div>'}
-else{firebase.initializeApp(firebaseConfig);db=firebase.database();
-db.ref('.info/serverTimeOffset').on('value',s=>off=s.val()||0);home();}
+else{firebase.initializeApp(firebaseConfig);
+/* App Check: このサイトから来たアクセスだと証明する(失敗してもゲームは続ける) */
+try{firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider('6LfFffwtAAAAAKMoDAtqJDlgLK720RWBuBENti2t'),true)}catch(e){console.warn('App Check',e)}
+db=firebase.database();
+db.ref('.info/serverTimeOffset').on('value',s=>off=s.val()||0);
+/* 見えない匿名ログイン。ログインのID(uid)を、そのままプレイヤーのIDにする(ルールで「自分の場所しか書けない」をチェックするため) */
+app.innerHTML='<h1>🎨 お絵描き伝言ゲーム</h1><div class="card dim">接続中…</div>';
+let started=false;const go=()=>{if(started)return;started=true;home()};
+try{firebase.auth().signInAnonymously().then(c=>{if(c&&c.user&&c.user.uid)me.id=c.user.uid}).catch(e=>console.warn('ログインできませんでした',e)).then(go)}catch(e){go()}
+setTimeout(go,8000);}
 const now=()=>Date.now()+off;
 
 function home(err){curKey='';app.innerHTML=`<h1>🎨 お絵描き伝言ゲーム</h1><div class="card">
@@ -68,10 +78,11 @@ else{Object.entries(ps).forEach(([id,p])=>{if(p.name===nm){dups.push(id);dupJoin
 if(Object.keys(ps).length-dups.length>=8)return $('er').textContent='満員です'}}
 ref=db.ref('oekaki-rooms/'+code);
 if(create)await ref.update({state:'lobby',phaseId:0,category:'すべて'});
-for(const id of dups)await ref.child('players/'+id).remove();
 const pr=ref.child('players/'+me.id);
 if((await pr.get()).exists())await pr.update({name:me.name});
 else await pr.set({name:me.name,joined:isFinite(dupJoined)?dupJoined:firebase.database.ServerValue.TIMESTAMP});
+/* 同じ名前の古い自分を消す(先に自分を入れてから。ルールで、部屋の中の人しか書けないため) */
+for(const id of dups)if(id!==me.id)await ref.child('players/'+id).remove();
 LS.set('oekaki-room',code);odSet=false;
 ref.on('value',s=>{room=s.val();
 if(!room){cleanup();return home('部屋が閉じました')}
@@ -182,6 +193,7 @@ async function kick(id){if(!confirm(nameOf(id)+'さんを退出させますか�
 async function leave(){const r=room,id=me.id;if(r.state==='play'&&!confirm('ゲームの途中です。本当に部屋を出ますか？'))return;
 const others=Object.keys(r.players||{}).filter(k=>k!==id).length,rf=ref;
 rf.child('players/'+id).onDisconnect().cancel();cleanup();
-try{if(r.state==='play')await rf.child('left/'+id).set(true);await rf.child('players/'+id).remove();if(!others)await rf.remove()}catch(e){}
+try{if(!others)await rf.remove();/* 最後の1人なら部屋ごと消す(自分がまだ部屋の中にいるうちに) */
+else{if(r.state==='play')await rf.child('left/'+id).set(true);await rf.child('players/'+id).remove()}}catch(e){}
 home()}
 </script></body></html>
