@@ -60,7 +60,8 @@ function home(err){curKey='';app.innerHTML=`<h1>🎨 お絵描き伝言ゲーム
 <input id="nm" maxlength="8" placeholder="なまえ" value="${esc(me.name)}">
 <button id="mk">部屋を作る</button><hr style="border-color:var(--bd)">
 <input id="cd" inputmode="numeric" maxlength="4" placeholder="部屋コード(4けた)" value="${esc(LS.get('oekaki-room')||'')}">
-<button id="jn" class="sub">入室する</button><div class="err" id="er">${err||''}</div></div><div class="dim">2〜8人</div>`;
+<button id="jn" class="sub">入室する</button><div class="err" id="er">${err||''}</div></div><div class="dim">2〜8人</div>
+<p class="dim" style="text-align:center;font-size:13px"><a href="/">Muddy's Games トップ</a>・<a href="/privacy.html">プライバシーポリシー</a></p>`;
 $('mk').onclick=()=>enter(null);$('jn').onclick=()=>enter($('cd').value.trim());}
 
 function cleanup(){try{ref.off()}catch(e){}odSet=false;room=null;curKey='';LS.del('oekaki-room')}
