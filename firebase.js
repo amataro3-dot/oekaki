@@ -11,7 +11,7 @@ else{
   db=firebase.database();
   db.ref('.info/serverTimeOffset').on('value',s=>off=s.val()||0);
   /* 見えない匿名ログイン。ログインのID(uid)を、そのままプレイヤーのIDにする(ルールで「自分の場所しか書けない」をチェックするため) */
-  app.innerHTML='<h1>🎨 お絵描き伝言ゲーム</h1><div class="card dim">接続中…</div>';
+  app.innerHTML='<h1>'+tx('🎨 お絵描き伝言ゲーム')+'</h1><div class="card dim">'+tx('接続中…')+'</div>';
   /* ログインが終わったら(だめでも、8秒たったら)ホーム画面へ */
   let started=false;
   const go=()=>{if(started)return;started=true;home()};

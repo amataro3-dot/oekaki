@@ -3,12 +3,14 @@
 /* ホーム画面(なまえ、部屋を作る、部屋コードで入る) */
 function home(err){
   curKey='';
-  app.innerHTML=`<h1>🎨 お絵描き伝言ゲーム</h1><div class="card">
-<input id="nm" maxlength="8" placeholder="なまえ" value="${esc(me.name)}">
-<button id="mk">部屋を作る</button><hr style="border-color:var(--bd)">
-<input id="cd" inputmode="numeric" maxlength="4" placeholder="部屋コード(4けた)" value="${esc(LS.get('oekaki-room')||'')}">
-<button id="jn" class="sub">入室する</button><div class="err" id="er">${err||''}</div></div><div class="dim">2〜8人</div>
-<p class="dim" style="text-align:center;font-size:13px"><a href="/">Muddy's Games トップ</a>・<a href="/privacy.html">プライバシーポリシー</a></p>`;
+  app.innerHTML=`<h1>${tx('🎨 お絵描き伝言ゲーム')}</h1>${langSwitchHtml()}<div class="card">
+<input id="nm" maxlength="8" placeholder="${tx('なまえ')}" value="${esc(me.name)}">
+<button id="mk">${tx('部屋を作る')}</button><hr style="border-color:var(--bd)">
+<input id="cd" inputmode="numeric" maxlength="4" placeholder="${tx('部屋コード(4けた)')}" value="${esc(LS.get('oekaki-room')||'')}">
+<button id="jn" class="sub">${tx('入室する')}</button><div class="err" id="er">${err||''}</div></div><div class="dim">${tx('2〜8人')}</div>
+<p class="dim" style="text-align:center;font-size:13px"><a href="${sitePath('/')}">${tx("Muddy's Games トップ")}</a>・<a href="${sitePath('/privacy.html')}">${tx('プライバシーポリシー')}</a></p>`;
+  /* 言語の切りかえ: 入力中のなまえを覚えてから読みこみ直す(i18n.js) */
+  langSwitchInit(()=>{const v=$('nm').value.trim();if(v)LS.set('oekaki-name',v)});
   $('mk').onclick=()=>enter(null);
   $('jn').onclick=()=>enter($('cd').value.trim());}
 
@@ -20,7 +22,7 @@ function cleanup(){
 /* 部屋に入る(code が null なら新しく作る) */
 async function enter(code){
   const nm=$('nm').value.trim();
-  if(!nm){$('er').textContent='なまえを入れてね';return}
+  if(!nm){$('er').textContent=tx('なまえを入れてね');return}
   me.name=nm;LS.set('oekaki-name',nm);
   const create=!code;
   try{
@@ -31,17 +33,17 @@ async function enter(code){
       for(let i=0;i<20;i++){code=String(1000+Math.floor(Math.random()*9000));if(!(await db.ref('oekaki-rooms/'+code).get()).exists())break}}
     else{
       r=(await db.ref('oekaki-rooms/'+code).get()).val();
-      if(!r)return $('er').textContent='部屋がありません';
+      if(!r)return $('er').textContent=tx('部屋がありません');
       const ps=r.players||{};
       if(r.state!=='lobby'){
         /* ゲーム中: 同じ名前で抜けていない人なら、その人として戻る */
         const ex=(r.order||[]).find(id=>ps[id]&&r.names&&r.names[id]===nm&&!(r.left&&r.left[id]));
-        if(!ex)return $('er').textContent='もう始まっています';
+        if(!ex)return $('er').textContent=tx('もう始まっています');
         me.id=ex}
       else{
         /* ロビー: 同じ名前の古い自分を探す(二重参加の解消) */
         Object.entries(ps).forEach(([id,p])=>{if(p.name===nm){dups.push(id);dupJoined=Math.min(dupJoined,p.joined||Infinity)}});
-        if(Object.keys(ps).length-dups.length>=8)return $('er').textContent='満員です'}}
+        if(Object.keys(ps).length-dups.length>=8)return $('er').textContent=tx('満員です')}}
     ref=db.ref('oekaki-rooms/'+code);
     if(create)await ref.update({state:'lobby',phaseId:0,category:'すべて'});
     const pr=ref.child('players/'+me.id);
@@ -53,13 +55,13 @@ async function enter(code){
     /* 部屋のデータが変わるたびに呼ばれる */
     ref.on('value',s=>{
       room=s.val();
-      if(!room){cleanup();return home('部屋が閉じました')}
-      if(!(room.players&&room.players[me.id])){const k=room.kicked&&room.kicked[me.id];cleanup();return home(k?'退出させられました':'部屋から外れました')}
+      if(!room){cleanup();return home(tx('部屋が閉じました'))}
+      if(!(room.players&&room.players[me.id])){const k=room.kicked&&room.kicked[me.id];cleanup();return home(k?tx('退出させられました'):tx('部屋から外れました'))}
       /* ロビーにいる間だけ、回線が切れたら自分を消す */
       if(room.state==='lobby'&&!odSet){ref.child('players/'+me.id).onDisconnect().remove();odSet=true}
       if(room.state!=='lobby'&&odSet){ref.child('players/'+me.id).onDisconnect().cancel();odSet=false}
       render();});
-  }catch(e){$('er').textContent='接続エラー: '+e.message}}
+  }catch(e){$('er').textContent=tx('接続エラー: ')+e.message}}
 
 /* 画面の切りかえ。場面が変わったときだけ作り直す(lobby / play / result) */
 function render(){
@@ -68,16 +70,16 @@ function render(){
   if(key===curKey)return;
   curKey=key;
   if(r.state==='lobby')lobby();else if(r.state==='play')play();else result();
-  app.insertAdjacentHTML('beforeend','<div style="margin-top:22px"><button class="sub" id="lv">部屋を出る</button></div>');
+  app.insertAdjacentHTML('beforeend','<div style="margin-top:22px"><button class="sub" id="lv">'+tx('部屋を出る')+'</button></div>');
   $('lv').onclick=leave;}
 
 /* ロビー画面(ホストはジャンルを選んで開始、✕で退出させる) */
 function lobby(){
   const p=plist(),h=isHost();
-  app.innerHTML=`<h1>ロビー</h1><div class="card"><div class="dim">部屋コード</div><div class="code">${ref.key}</div>
-<div>${p.map(([id,v])=>`<span class="pl ${id===me.id?'me':''}">${esc(v.name)}${h&&id!==me.id?` <b class="kk" data-id="${id}">✕</b>`:''}</span>`).join('')}</div><div class="dim">${p.length}/8人</div></div>
-${h?`<div class="card">お題ジャンル<select id="cat">${['すべて',...Object.keys(T)].map(c=>`<option ${c===room.category?'selected':''}>${c}</option>`).join('')}</select>
-<button id="st" ${p.length<2?'disabled':''}>ゲーム開始</button></div>`:`<div class="card">ジャンル：${esc(room.category)}<br><span class="dim">ホストの開始を待っています…</span></div>`}`;
+  app.innerHTML=`<h1>${tx('ロビー')}</h1><div class="card"><div class="dim">${tx('部屋コード')}</div><div class="code">${ref.key}</div>
+<div>${p.map(([id,v])=>`<span class="pl ${id===me.id?'me':''}">${esc(v.name)}${h&&id!==me.id?` <b class="kk" data-id="${id}">✕</b>`:''}</span>`).join('')}</div><div class="dim">${tx('{n}/8人',{n:p.length})}</div></div>
+${h?`<div class="card">${tx('お題ジャンル')}<select id="cat">${['すべて',...Object.keys(T)].map(c=>`<option value="${esc(c)}" ${c===room.category?'selected':''}>${esc(catName(c))}</option>`).join('')}</select>
+<button id="st" ${p.length<2?'disabled':''}>${tx('ゲーム開始')}</button></div>`:`<div class="card">${tx('ジャンル：')}${esc(catName(room.category))}<br><span class="dim">${tx('ホストの開始を待っています…')}</span></div>`}`;
   if(h){
     $('cat').onchange=e=>ref.update({category:e.target.value});
     $('st').onclick=start;
@@ -95,14 +97,14 @@ function start(){
 
 /* ホストが、ほかの人を退出させる */
 async function kick(id){
-  if(!confirm(nameOf(id)+'さんを退出させますか？'))return;
+  if(!confirm(tx('{n}を退出させますか？',{n:SAN(nameOf(id))})))return;
   await ref.child('kicked/'+id).set(true);
   await ref.child('players/'+id).remove()}
 
 /* 部屋を出る(書き込む順番はルールに合わせてある。変えるとはじかれる) */
 async function leave(){
   const r=room,id=me.id;
-  if(r.state==='play'&&!confirm('ゲームの途中です。本当に部屋を出ますか？'))return;
+  if(r.state==='play'&&!confirm(tx('ゲームの途中です。本当に部屋を出ますか？')))return;
   const others=Object.keys(r.players||{}).filter(k=>k!==id).length,rf=ref;
   rf.child('players/'+id).onDisconnect().cancel();
   cleanup();

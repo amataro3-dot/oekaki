@@ -32,7 +32,7 @@ function setupCanvas(){
   clear(c);strokes=[];log=[];t0=Date.now();
   const cols=['#222','#e11d48','#2563eb','#16a34a','#f59e0b','#fff'];
   $('tl').innerHTML=cols.map(k=>`<button class="sw ${k===col?'on':''}" data-c="${k}" style="background:${k}"></button>`).join('')+
-`<button class="sub" data-w="3">細</button><button class="sub" data-w="8">太</button>`;
+`<button class="sub" data-w="3">${tx('細')}</button><button class="sub" data-w="8">${tx('太')}</button>`;
   $('tl').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.c){col=b.dataset.c;$('tl').querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',s===b))}if(b.dataset.w)w=+b.dataset.w};
   /* 画面の位置を、絵の 300×300 の位置に直す */
   const pos=e=>{const b=c.getBoundingClientRect();return[Math.round((e.clientX-b.left)*300/b.width),Math.round((e.clientY-b.top)*300/b.height)]};

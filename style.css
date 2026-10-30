@@ -44,3 +44,5 @@ html,body{overscroll-behavior-y:contain}
 .pl{display:inline-block;padding:4px 10px;margin:3px;border-radius:20px;border:1px solid var(--bd)}
 .pl.me{background:var(--ac);color:#fff}
 .kk{display:inline-block;padding:2px 7px;margin-left:4px;color:#dc2626;font-weight:700}
+/* 言語の切りかえ(v=2) */
+.langs{display:flex;gap:6px;margin:0 0 10px}.langs button{flex:1;margin:0;padding:8px 4px;font-size:14px}.langs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}

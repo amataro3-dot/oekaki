@@ -13,9 +13,15 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 /* 答え合わせ: 空白や記号をのぞき、カタカナをひらがなにしてくらべる */
 const norm=s=>(s||'').normalize('NFKC').toLowerCase().replace(/[\s・、。!！?？]/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
+/* 英語の答えのため: a/an/the、空白・-・' のちがい、複数形の s/es を気にしない形をいくつか作る */
+const normEn=s=>{const x=(s||'').normalize('NFKC').toLowerCase().trim().replace(/^(a|an|the)\s+/,'').replace(/[\s\-'’.,!?]/g,'');return[x,x.replace(/es$/,''),x.replace(/s$/,'')]};
+const forms=s=>new Set([norm(s),...normEn(s)].filter(Boolean));
+/* お題・読み・別の答え方に加えて、英語・韓国語の言い方(topics_i18n.js)のどれかと同じなら正解 */
 const judge=(a,r)=>{
-  const x=norm(a);
-  return x!==''&&[r.topic,...String(r.reading||'').split('|')].some(t=>norm(t)===x)};
+  const xs=forms(a);
+  if(!norm(a))return false;
+  const all=[r.topic,...String(r.reading||'').split('|'),...topicForms(r.topic,'en'),...topicForms(r.topic,'ko')];
+  return all.some(t=>[...forms(t)].some(f=>xs.has(f)))};
 
 /* スマホに覚えておく(名前・部屋コード)。使えないときは何もしない */
 const LS={
