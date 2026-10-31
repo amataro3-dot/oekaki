@@ -14,11 +14,13 @@ function fin(l){
 /* 白でぬりつぶす */
 function clear(c){const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,300,300)}
 
-/* 線を1本描く */
+/* 線を1本描く
+   点が1つだけの線(ちょんと触っただけ)は、丸をぬって描く。
+   長さ0の線は、Android では点になるが iPhone では何も出ないため、どちらも同じに見えるようにする */
 function stroke(x,s){
+  if(s.p.length<4){x.fillStyle=s.c;x.beginPath();x.arc(s.p[0],s.p[1],s.w/2,0,Math.PI*2);x.fill();return}
   x.strokeStyle=s.c;x.lineWidth=s.w;x.lineCap=x.lineJoin='round';
   x.beginPath();x.moveTo(s.p[0],s.p[1]);
-  if(s.p.length<4)x.lineTo(s.p[0],s.p[1]);
   for(let i=2;i<s.p.length;i+=2)x.lineTo(s.p[i],s.p[i+1]);
   x.stroke()}
 
