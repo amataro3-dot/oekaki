@@ -2,6 +2,7 @@
 
 /* ホーム画面(なまえ、部屋を作る、部屋コードで入る) */
 function home(err){
+  if(window.BackGuard)BackGuard.set('home');/* 戻るボタン: 「ホームに戻りますか？」(backguard.js) */
   curKey='';
   app.innerHTML=`<h1>${tx('🎨 お絵描き伝言ゲーム')}</h1>${langSwitchHtml()}<div class="card">
 <input id="nm" maxlength="8" placeholder="${tx('なまえ')}" value="${esc(me.name)}">
@@ -71,7 +72,9 @@ function render(){
   curKey=key;
   if(r.state==='lobby')lobby();else if(r.state==='play')play();else result();
   app.insertAdjacentHTML('beforeend','<div style="margin-top:22px"><button class="sub" id="lv">'+tx('部屋を出る')+'</button></div>');
-  $('lv').onclick=leave;}
+  $('lv').onclick=()=>leave();
+  /* 戻るボタン: ゲーム中は「ゲームをやめますか？」、ロビー・結果は「ルームから出ますか？」。はいで部屋を出る */
+  if(window.BackGuard)BackGuard.set(r.state==='play'?'game':'room',()=>leave(true));}
 
 /* ロビー画面(ホストはジャンルを選んで開始、✕で退出させる) */
 function lobby(){
@@ -102,9 +105,9 @@ async function kick(id){
   await ref.child('players/'+id).remove()}
 
 /* 部屋を出る(書き込む順番はルールに合わせてある。変えるとはじかれる) */
-async function leave(){
+async function leave(sure){/* sure: 戻るボタンで、もう確認したとき */
   const r=room,id=me.id;
-  if(r.state==='play'&&!confirm(tx('ゲームの途中です。本当に部屋を出ますか？')))return;
+  if(!sure&&r.state==='play'&&!confirm(tx('ゲームの途中です。本当に部屋を出ますか？')))return;
   const others=Object.keys(r.players||{}).filter(k=>k!==id).length,rf=ref;
   rf.child('players/'+id).onDisconnect().cancel();
   cleanup();
