@@ -18,7 +18,13 @@ function home(err){
 /* 部屋から離れたあとの片づけ */
 function cleanup(){
   try{ref.off()}catch(e){}
-  odSet=false;room=null;curKey='';LS.del('oekaki-room')}
+  odSet=false;room=null;curKey='';LS.del('oekaki-in')}/* 番号(oekaki-room)は入力欄に残す */
+
+/* 読み直したとき: 前に入っていた部屋へ自動で入り直す(自分で出たときは oekaki-in が消えているので戻らない) */
+function autoEnter(){
+  const c=LS.get('oekaki-room');
+  if(LS.get('oekaki-in')!=='1'||!c||!me.name)return;
+  LS.del('oekaki-in');enter(c)}
 
 /* 部屋に入る(code が null なら新しく作る) */
 async function enter(code){
@@ -52,7 +58,7 @@ async function enter(code){
     else await pr.set({name:me.name,joined:isFinite(dupJoined)?dupJoined:firebase.database.ServerValue.TIMESTAMP});
     /* 同じ名前の古い自分を消す(先に自分を入れてから。ルールで、部屋の中の人しか書けないため) */
     for(const id of dups)if(id!==me.id)await ref.child('players/'+id).remove();
-    LS.set('oekaki-room',code);odSet=false;
+    LS.set('oekaki-room',code);LS.set('oekaki-in','1');odSet=false;
     /* 部屋のデータが変わるたびに呼ばれる */
     ref.on('value',s=>{
       room=s.val();

@@ -14,6 +14,6 @@ else{
   app.innerHTML='<h1>'+tx('🎨 お絵描き伝言ゲーム')+'</h1><div class="card dim">'+tx('接続中…')+'</div>';
   /* ログインが終わったら(だめでも、8秒たったら)ホーム画面へ */
   let started=false;
-  const go=()=>{if(started)return;started=true;home()};
+  const go=()=>{if(started)return;started=true;home();autoEnter()};
   try{firebase.auth().signInAnonymously().then(c=>{if(c&&c.user&&c.user.uid)me.id=c.user.uid}).catch(e=>console.warn('ログインできませんでした',e)).then(go)}catch(e){go()}
   setTimeout(go,8000);}
