@@ -9,6 +9,7 @@ function home(err){
 <button id="mk">${tx('部屋を作る')}</button><hr style="border-color:var(--bd)">
 <input id="cd" inputmode="numeric" maxlength="4" placeholder="${tx('部屋コード(4けた)')}" value="${esc(LS.get('oekaki-room')||'')}">
 <button id="jn" class="sub">${tx('入室する')}</button><div class="err" id="er">${err||''}</div></div><div class="dim">${tx('2〜8人')}</div>
+<div class="about"><h2>${tx("お絵描き伝言ゲーム とは")}</h2><p>${tx("お題を絵だけで次の人へリレーする伝言ゲームです。前の人の絵は10秒しか見られないので、だんだんお題が変わっていきます。最後に全員の絵を再生して、どこで変わったかをみんなで答え合わせ。2〜8人で遊べます。")}</p><p><a href="${sitePath('/howto-oekaki.html')}">${tx('📖 遊び方を見る →')}</a></p></div>
 <p class="dim" style="text-align:center;font-size:13px"><a href="${sitePath('/')}">${tx("Muddy's Games トップ")}</a>・<a href="${sitePath('/privacy.html')}">${tx('プライバシーポリシー')}</a></p>`;
   /* 言語の切りかえ: 入力中のなまえを覚えてから読みこみ直す(i18n.js) */
   langSwitchInit(()=>{const v=$('nm').value.trim();if(v)LS.set('oekaki-name',v)});

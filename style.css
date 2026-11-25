@@ -46,3 +46,6 @@ html,body{overscroll-behavior-y:contain}
 .kk{display:inline-block;padding:2px 7px;margin-left:4px;color:#dc2626;font-weight:700}
 /* 言語の切りかえ(v=2) */
 .langs{display:flex;gap:6px;margin:0 0 10px}.langs button{flex:1;margin:0;padding:8px 4px;font-size:14px}.langs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+
+/* 最初の画面の説明(2026-11-25) */
+.about{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 14px;margin:12px 0 6px}.about h2{font-size:16px;margin:0 0 4px}.about p{margin:4px 0;font-size:14px;line-height:1.7}.about a{color:var(--ac)}

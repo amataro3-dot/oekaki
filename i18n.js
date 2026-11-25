@@ -50,6 +50,10 @@ const I18N={
   '2〜8人':['2–8 players','2~8명'],
   "Muddy's Games トップ":["Muddy's Games home","Muddy's Games 홈"],
   'プライバシーポリシー':['Privacy policy','개인정보 처리방침'],
+  /* 最初の画面の説明(2026-11-25。AdSense 審査のため) */
+  "お絵描き伝言ゲーム とは": ["What is Drawing Telephone?", "그림 전달 게임이란?"],
+  "お題を絵だけで次の人へリレーする伝言ゲームです。前の人の絵は10秒しか見られないので、だんだんお題が変わっていきます。最後に全員の絵を再生して、どこで変わったかをみんなで答え合わせ。2〜8人で遊べます。": ["A telephone game where the topic is passed to the next person using only drawings. You can see the previous drawing for just 10 seconds, so the topic slowly changes. At the end, replay everyone's drawings and find out together where it changed. For 2–8 players.", "제시어를 그림만으로 다음 사람에게 전달하는 게임입니다. 앞사람의 그림은 10초밖에 볼 수 없어서 제시어가 점점 바뀌어 갑니다. 마지막에 모두의 그림을 재생하며 어디서 바뀌었는지 함께 확인합니다. 2~8명이 즐길 수 있습니다."],
+  "📖 遊び方を見る →": ["📖 How to play →", "📖 게임 방법 보기 →"],
   'なまえを入れてね':['Please enter your name','이름을 입력해 주세요'],
   '部屋がありません':['Room not found','방이 없어요'],
   'もう始まっています':['The game has already started','이미 시작했어요'],
